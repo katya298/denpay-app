@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DenPay</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#202124}
+button,input,textarea,select{font-family:inherit}
+button{cursor:pointer}
+.app{width:100%;max-width:430px;min-height:100vh;margin:auto;padding:20px 16px 100px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.logo{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:bold}
+.logo-icon{width:42px;height:42px;border-radius:13px;background:#202124;color:white;display:flex;align-items:center;justify-content:center;font-size:23px}
+.settings{font-size:22px;cursor:pointer}
+.balance-card,.stat-card,.account,.operation,.empty{background:white}
+.balance-card{border-radius:24px;padding:24px;margin-bottom:14px;box-shadow:0 5px 20px rgba(0,0,0,.04)}
+.small-title{color:#777;font-size:14px;margin-bottom:7px}
+.balance{font-size:38px;font-weight:bold}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-card{border-radius:20px;padding:18px}
+.stat-title{color:#777;font-size:13px;margin-bottom:8px}
+.stat-value{font-size:20px;font-weight:bold}
+.income{color:#25a244}.expense{color:#e63946}.debt-color{color:#4b4bb7}
+.period{display:flex;gap:7px;overflow-x:auto;padding:18px 0 3px}
+.period button{border:none;background:white;color:#666;padding:10px 14px;border-radius:20px;white-space:nowrap}
+.period button.active{background:#202124;color:white}
+.section-title{font-size:19px;font-weight:bold;margin:22px 0 12px}
+.accounts{display:grid;gap:9px}
+.account{border-radius:18px;padding:15px;display:flex;justify-content:space-between;align-items:center}
+.account-left{display:flex;align-items:center;gap:12px}
+.account-icon{width:40px;height:40px;border-radius:13px;background:#f0f1f3;display:flex;align-items:center;justify-content:center;font-size:20px}
+.account-name{font-weight:600}
+.account-actions{display:flex;align-items:center;gap:8px}
+.account-balance{font-weight:bold}
+.transfer-small{border:none;background:#eeeefd;color:#4b4bb7;border-radius:10px;padding:7px 9px;font-size:12px}
+.account-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.account-button{border:none;border-radius:16px;padding:14px;background:white;font-weight:600;color:#444}
+.account-button.primary{background:#202124;color:white}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.action{border:none;border-radius:18px;padding:17px 8px;font-size:15px;font-weight:600}
+.income-button{background:#e3f6e8;color:#208a3a}
+.expense-button{background:#fde6e8;color:#d92d3a}
+.debt-button{background:#eeeefd;color:#4b4bb7;grid-column:span 2}
+.history,.debts{display:grid;gap:9px}
+.operation{border-radius:17px;padding:15px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.operation-left{display:flex;align-items:center;gap:12px;min-width:0}
+.operation-icon{width:38px;height:38px;border-radius:12px;display:flex;justify-content:center;align-items:center;flex-shrink:0}
+.income-icon{background:#e3f6e8}.expense-icon{background:#fde6e8}.transfer-icon{background:#eeeefd}
+.operation-comment{font-weight:600;overflow-wrap:anywhere}
+.operation-date,.operation-account{color:#888;font-size:11px;margin-top:3px}
+.operation-amount{font-weight:bold;white-space:nowrap;margin-left:8px}
+.debt-card{background:white;border-radius:18px;padding:16px}
+.debt-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.debt-name{font-size:17px;font-weight:bold}
+.debt-amount{font-size:18px;font-weight:bold;color:#4b4bb7}
+.debt-meta{color:#888;font-size:12px;margin-top:6px}
+.debt-comment{color:#555;font-size:13px;margin-top:6px}
+.debt-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.debt-action{border:none;border-radius:12px;padding:11px;font-weight:600}
+.return-button{background:#e3f6e8;color:#208a3a}
+.edit-debt-button{background:#eeeefd;color:#4b4bb7}
+.bottom-menu{position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);background:white;border-top:1px solid #eee;display:grid;grid-template-columns:repeat(5,1fr);padding:9px 4px 11px}
+.menu-item{text-align:center;color:#777;font-size:10px;cursor:pointer}
+.menu-item span{display:block;font-size:20px;margin-bottom:3px}
+.menu-item.active{color:#202124;font-weight:bold}
+.modal-background{position:fixed;z-index:100;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+.modal-background.show{display:flex}
+.modal{width:min(430px,100%);max-height:90vh;overflow-y:auto;background:white;border-radius:26px 26px 0 0;padding:22px 18px 28px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:21px;font-weight:bold}
+.close{border:none;background:#f1f1f1;width:34px;height:34px;border-radius:50%;font-size:20px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;color:#777;margin-bottom:7px}
+.field input,.field textarea,.field select{width:100%;border:1px solid #ddd;border-radius:14px;padding:14px;font-size:16px;outline:none;background:white}
+.field textarea{min-height:75px;resize:none}
+.save-button{width:100%;border:none;background:#202124;color:white;border-radius:16px;padding:16px;font-size:16px;font-weight:bold}
+.delete-button{width:100%;border:none;background:#fde6e8;color:#d92d3a;border-radius:16px;padding:14px;font-size:15px;font-weight:bold;margin-top:10px}
+.icon-choices{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.icon-choice{border:1px solid #ddd;background:white;border-radius:12px;padding:10px;font-size:20px}
+.icon-choice.selected{background:#202124;color:white}
+@media(min-width:700px){body{padding:25px 0}}
+.search-box{margin-bottom:15px}
+</style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#202124">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="DenPay">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo"><div class="logo-icon">D</div>DenPay</div>
+    <div class="settings" id="settingsBtn">⚙️</div>
+  </div>
+
+  <div class="balance-card">
+    <div class="small-title">Общий баланс</div>
+    <div class="balance" id="totalBalance">0 €</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-title">🟢 Заработано</div><div class="stat-value income" id="totalIncome">+0 €</div></div>
+    <div class="stat-card"><div class="stat-title">🔴 Потрачено</div><div class="stat-value expense" id="totalExpense">−0 €</div></div>
+  </div>
+
+  <div class="period">
+    <button class="active" data-period="today">Сегодня</button>
+    <button data-period="week">Неделя</button>
+    <button data-period="month">Месяц</button>
+    <button data-period="all">Всё время</button>
+  </div>
+
+  <div id="accountsSection">
+    <div class="section-title">💳 Мои счета</div>
+    <div class="accounts" id="accountsList"></div>
+
+    <div class="account-buttons">
+      <button class="account-button primary" id="addAccount">➕ Добавить счёт</button>
+      <button class="account-button" id="openTransfer">🔄 Перевести</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="action income-button" id="openIncome">➕ Добавить доход</button>
+    <button class="action expense-button" id="openExpense">➖ Добавить расход</button>
+    <button class="action debt-button" id="openDebt">👤 Должники</button>
+  </div>
+
+  <div id="debtsSection">
+    <div class="section-title">👤 Должники</div>
+    <div class="debts" id="debtsList"></div>
+  </div>
+
+  <div id="historySection">
+    <div class="section-title">📋 Последние операции</div>
+    <div class="history" id="history"></div>
+  </div>
+</div>
+
+<div class="bottom-menu">
+  <div class="menu-item active" data-tab="main"><span>🏠</span>Главная</div>
+  <div class="menu-item" data-tab="history"><span>📋</span>История</div>
+  <div class="menu-item" data-tab="accounts"><span>💳</span>Счета</div>
+  <div class="menu-item" data-tab="debts"><span>👤</span>Должники</div>
+  <div class="menu-item" data-tab="settings"><span>⚙️</span>Настройки</div>
+</div>
+
+<!-- ДОХОД -->
+<div class="modal-background" id="incomeModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">➕ Новый доход</div><button class="close" id="closeIncome">×</button></div>
+  <div class="field"><label>Сумма</label><input type="number" id="incomeAmount" placeholder="Например, 50" min="0" step="0.01"></div>
+  <div class="field"><label>Комментарий</label><textarea id="incomeComment" placeholder="Например: работа за сегодня"></textarea></div>
+  <div class="field"><label>Дата</label><input type="date" id="incomeDate"></div>
+  <div class="field"><label>Куда поступили деньги?</label><select id="incomeAccount"></select></div>
+  <button class="save-button" id="saveIncome">Добавить доход</button>
+</div></div>
+
+<!-- РАСХОД -->
+<div class="modal-background" id="expenseModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">➖ Новый расход</div><button class="close" id="closeExpense">×</button></div>
+  <div class="field"><label>Сумма</label><input type="number" id="expenseAmount" placeholder="Например, 12.75" min="0" step="0.01"></div>
+  <div class="field"><label>На что потрачено?</label><textarea id="expenseComment" placeholder="Например: продукты"></textarea></div>
+  <div class="field"><label>Дата</label><input type="date" id="expenseDate"></div>
+  <div class="field"><label>С какого счёта потрачено?</label><select id="expenseAccount"></select></div>
+  <button class="save-button" id="saveExpense">Добавить расход</button>
+</div></div>
+
+<!-- РЕДАКТИРОВАНИЕ ОПЕРАЦИИ -->
+<div class="modal-background" id="editModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">✏️ Редактировать</div><button class="close" id="closeEdit">×</button></div>
+  <div class="field"><label>Сумма</label><input type="number" id="editAmount" min="0" step="0.01"></div>
+  <div class="field"><label>Комментарий</label><textarea id="editComment"></textarea></div>
+  <div class="field"><label>Дата</label><input type="date" id="editDate"></div>
+  <div class="field"><label>Счёт</label><select id="editAccount"></select></div>
+  <button class="save-button" id="saveEdit">Сохранить изменения</button>
+  <button class="delete-button" id="deleteOperation">Удалить операцию</button>
+</div></div>
+
+<!-- ДОБАВЛЕНИЕ СЧЁТА -->
+<div class="modal-background" id="accountModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">➕ Новый счёт</div><button class="close" id="closeAccount">×</button></div>
+  <div class="field"><label>Название счёта</label><input type="text" id="newAccountName" placeholder="Например: Revolut"></div>
+  <div class="field"><label>Иконка</label><div class="icon-choices">
+    <button class="icon-choice selected" data-icon="💳">💳</button>
+    <button class="icon-choice" data-icon="💶">💶</button>
+    <button class="icon-choice" data-icon="🏦">🏦</button>
+    <button class="icon-choice" data-icon="💰">💰</button>
+    <button class="icon-choice" data-icon="👜">👜</button>
+  </div></div>
+  <div class="field"><label>Начальный баланс</label><input type="number" id="newAccountBalance" placeholder="0" min="0" step="0.01"></div>
+  <button class="save-button" id="saveAccount">Создать счёт</button>
+</div></div>
+
+<!-- ПЕРЕВОД -->
+<div class="modal-background" id="transferModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">🔄 Перевод между счетами</div><button class="close" id="closeTransfer">×</button></div>
+  <div class="field"><label>Откуда</label><select id="transferFrom"></select></div>
+  <div class="field"><label>Куда</label><select id="transferTo"></select></div>
+  <div class="field"><label>Сумма</label><input type="number" id="transferAmount" placeholder="Например, 20" min="0" step="0.01"></div>
+  <div class="field"><label>Комментарий</label><textarea id="transferComment" placeholder="Например: откладываю деньги"></textarea></div>
+  <button class="save-button" id="saveTransfer">Перевести деньги</button>
+</div></div>
+
+<!-- НОВЫЙ ДОЛГ -->
+<div class="modal-background" id="debtModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">👤 Новый должник</div><button class="close" id="closeDebt">×</button></div>
+  <div class="field"><label>Имя</label><input type="text" id="debtName" placeholder="Например: Андрей"></div>
+  <div class="field"><label>Сколько должен?</label><input type="number" id="debtAmount" placeholder="Например, 50" min="0.01" step="0.01"></div>
+  <div class="field"><label>Дата</label><input type="date" id="debtDate"></div>
+  <div class="field"><label>Комментарий</label><textarea id="debtComment" placeholder="Например: за билеты"></textarea></div>
+  <button class="save-button" id="saveDebt">Добавить должника</button>
+</div></div>
+
+<!-- ВОЗВРАТ ДОЛГА -->
+<div class="modal-background" id="returnDebtModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">💚 Возврат долга</div><button class="close" id="closeReturnDebt">×</button></div>
+  <div class="field"><label id="returnDebtLabel">Сколько вернули?</label><input type="number" id="returnDebtAmount" min="0.01" step="0.01"></div>
+  <div class="field"><label>Куда поступили деньги?</label><select id="returnDebtAccount"></select></div>
+  <div class="field"><label>Дата</label><input type="date" id="returnDebtDate"></div>
+  <button class="save-button" id="saveDebtReturn">Зачислить возврат</button>
+</div></div>
+
+<!-- РЕДАКТИРОВАНИЕ ДОЛГА -->
+<div class="modal-background" id="editDebtModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">✏️ Редактировать долг</div><button class="close" id="closeEditDebt">×</button></div>
+  <div class="field"><label>Имя</label><input type="text" id="editDebtName"></div>
+  <div class="field"><label>Общая сумма долга</label><input type="number" id="editDebtAmount" min="0.01" step="0.01"></div>
+  <div class="field"><label>Дата</label><input type="date" id="editDebtDate"></div>
+  <div class="field"><label>Комментарий</label><textarea id="editDebtComment"></textarea></div>
+  <button class="save-button" id="saveDebtEdit">Сохранить изменения</button>
+  <button class="delete-button" id="deleteDebt">Удалить должника</button>
+</div></div>
+
+<!-- ПОЛНАЯ ИСТОРИЯ МОДАЛ -->
+<div class="modal-background" id="historyModal"><div class="modal">
+  <div class="modal-header"><div class="modal-title">📋 История операций</div><button class="close" id="closeHistoryModal">×</button></div>
+  <div class="field search-box"><input type="text" id="historySearch" placeholder="🔍 Поиск..."></div>
+  <div id="fullHistoryList"></div>
+</div></div>
+
+<script>
+const oldData = JSON.parse(localStorage.getItem("denpayData"));
+let data = oldData || {
+  accounts:{card:0,cash:0,savings:0,deposit:0},
+  accountInfo:{
+    card:{name:"Основная карта",icon:"💳"},
+    cash:{name:"Наличные",icon:"💵"},
+    savings:{name:"Накопления",icon:"🐷"},
+    deposit:{name:"Депозит",icon:"🏦"}
+  },
+  operations:[],
+  debts:[]
+};
+
+if(!data.accountInfo){
+  data.accountInfo={
+    card:{name:"Основная карта",icon:"💳"},
+    cash:{name:"Наличные",icon:"💵"},
+    savings:{name:"Накопления",icon:"🐷"},
+    deposit:{name:"Депозит",icon:"🏦"}
+  };
+}
+if(!data.operations) data.operations=[];
+if(!data.accounts) data.accounts={card:0,cash:0,savings:0,deposit:0};
+if(!data.debts) data.debts=[];
+
+let selectedPeriod="today";
+let editingOperationId=null;
+let editingDebtId=null;
+let returningDebtId=null;
+let selectedIcon="💳";
+
+function saveData(){localStorage.setItem("denpayData",JSON.stringify(data));}
+
+function formatMoney(amount){
+  const n=Number(amount)||0;
+  if(Number.isInteger(n)) return n.toLocaleString("ru-RU")+" €";
+  return n.toLocaleString("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:2})+" €";
+}
+
+function getBalance(){
+  return Object.values(data.accounts).reduce((s,v)=>s+Number(v),0);
+}
+
+function todayString(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function formatDate(dateStr){
+  if(!dateStr) return "";
+  const p=dateStr.split("-");
+  return p.length===3 ? `${p[2]}.${p[1]}.${p[0]}` : dateStr;
+}
+
+function escapeHTML(text){
+  return String(text||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+function isInSelectedPeriod(dateString){
+  if(selectedPeriod==="all") return true;
+  if(!dateString) return false;
+  const d=new Date(dateString+"T12:00:00");
+  const today=new Date(); today.setHours(12,0,0,0);
+  if(selectedPeriod==="today") return d.getTime()===today.getTime();
+  if(selectedPeriod==="week"){
+    const start=new Date(today);
+    const day=start.getDay();
+    start.setDate(start.getDate()-(day===0?6:day-1));
+    return d>=start;
+  }
+  if(selectedPeriod==="month")
+    return d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();
+  return true;
+}
+
+function fillAccountSelects(){
+  const selects=["incomeAccount","expenseAccount","editAccount","transferFrom","transferTo","returnDebtAccount"];
+  selects.forEach(id=>{
+    const select=document.getElementById(id);
+    if(!select) return;
+    const curVal = select.value;
+    select.innerHTML="";
+    Object.keys(data.accounts).forEach(accountId=>{
+      const info=data.accountInfo[accountId]||{name:accountId,icon:"💳"};
+      const option=document.createElement("option");
+      option.value=accountId;
+      option.textContent=`${info.icon} ${info.name}`;
+      select.appendChild(option);
+    });
+    if(curVal && data.accounts[curVal] !== undefined) select.value = curVal;
+  });
+}
+
+function renderAccounts(){
+  const box=document.getElementById("accountsList");
+  box.innerHTML="";
+  Object.keys(data.accounts).forEach(id=>{
+    const info=data.accountInfo[id]||{name:id,icon:"💳"};
+    const div=document.createElement("div");
+    div.className="account";
+    div.innerHTML=`
+      <div class="account-left">
+        <div class="account-icon">${info.icon}</div>
+        <div class="account-name">${escapeHTML(info.name)}</div>
+      </div>
+      <div class="account-actions">
+        <div class="account-balance">${formatMoney(data.accounts[id])}</div>
+        <button class="transfer-small">🔄</button>
+      </div>`;
+    div.querySelector(".transfer-small").addEventListener("click",e=>{
+      e.stopPropagation(); openTransferWithAccount(id);
+    });
+    box.appendChild(div);
+  });
+}
+
+function renderHistory(){
+  const history=document.getElementById("history");
+  const operations=data.operations.filter(o=>isInSelectedPeriod(o.date)).slice().reverse();
+  if(!operations.length){
+    history.innerHTML=`<div class="empty" style="border-radius:18px;padding:25px;text-align:center;color:#888">Пока нет операций за выбранный период</div>`;
+    return;
+  }
+  history.innerHTML="";
+  operations.forEach(o=>{
+    const div=document.createElement("div"); div.className="operation";
+    let icon="🟢",iconClass="income-icon",amount="+"+formatMoney(o.amount),typeClass="income";
+    if(o.type==="expense"){icon="🔴";iconClass="expense-icon";amount="−"+formatMoney(o.amount);typeClass="expense";}
+    if(o.type==="transfer"){
+      icon="🔄";iconClass="transfer-icon";typeClass="";
+      amount=formatMoney(o.amount);
+    }
+    let accountText="";
+    if(o.type==="transfer"){
+      const from=data.accountInfo[o.from],to=data.accountInfo[o.to];
+      accountText=`${from?.icon||""} ${from?.name||o.from} → ${to?.icon||""} ${to?.name||o.to}`;
+    }else{
+      const info=data.accountInfo[o.account];
+      accountText=info?`${info.icon} ${info.name}`:"";
+    }
+    const comment=o.comment||(o.type==="income"?"Заработок":o.type==="expense"?"Расход":"Перевод");
+    div.innerHTML=`
+      <div class="operation-left">
+        <div class="operation-icon ${iconClass}">${icon}</div>
+        <div>
+          <div class="operation-comment">${escapeHTML(comment)}</div>
+          <div class="operation-date">${formatDate(o.date)}</div>
+          <div class="operation-account">${escapeHTML(accountText)}</div>
+        </div>
+      </div>
+      <div class="operation-amount ${typeClass}">${amount}</div>`;
+    if(o.type!=="transfer") div.addEventListener("click",()=>openEditOperation(o.id));
+    history.appendChild(div);
+  });
+}
+
+function renderDebts(){
+  const box=document.getElementById("debtsList");
+  box.innerHTML="";
+  const active=data.debts.filter(d=>Number(d.remaining)>0);
+  if(!active.length){
+    box.innerHTML=`<div class="empty" style="border-radius:18px;padding:22px;text-align:center;color:#888">Пока никто не должен деньги</div>`;
+    return;
+  }
+  active.forEach(d=>{
+    const div=document.createElement("div");div.className="debt-card";
+    div.innerHTML=`
+      <div class="debt-top">
+        <div class="debt-name">👤 ${escapeHTML(d.name)}</div>
+        <div class="debt-amount">${formatMoney(d.remaining)}</div>
+      </div>
+      <div class="debt-meta">Долг от ${formatDate(d.date)} · всего ${formatMoney(d.amount)}</div>
+      ${d.comment?`<div class="debt-comment">${escapeHTML(d.comment)}</div>`:""}
+      <div class="debt-actions">
+        <button class="debt-action return-button">💚 Вернул деньги</button>
+        <button class="debt-action edit-debt-button">✏️ Изменить</button>
+      </div>`;
+    div.querySelector(".return-button").addEventListener("click",()=>openReturnDebt(d.id));
+    div.querySelector(".edit-debt-button").addEventListener("click",()=>openEditDebt(d.id));
+    box.appendChild(div);
+  });
+}
+
+function updateScreen(){
+  document.getElementById("totalBalance").textContent=formatMoney(getBalance());
+  let income=0,expense=0;
+  data.operations.forEach(o=>{
+    if(!isInSelectedPeriod(o.date))return;
+    if(o.type==="income")income+=Number(o.amount);
+    if(o.type==="expense")expense+=Number(o.amount);
+  });
+  document.getElementById("totalIncome").textContent="+"+formatMoney(income);
+  document.getElementById("totalExpense").textContent="−"+formatMoney(expense);
+  fillAccountSelects();renderAccounts();renderHistory();renderDebts();
+}
+
+/* Доход */
+document.getElementById("openIncome").onclick=()=>{
+  fillAccountSelects();
+  incomeDate.value=todayString();incomeAmount.value="";incomeComment.value="";
+  if(Object.keys(data.accounts).length) incomeAccount.value=Object.keys(data.accounts)[0];
+  incomeModal.classList.add("show");
+};
+document.getElementById("closeIncome").onclick=()=>incomeModal.classList.remove("show");
+document.getElementById("saveIncome").onclick=()=>{
+  const amount=Number(incomeAmount.value),comment=incomeComment.value.trim(),date=incomeDate.value,account=incomeAccount.value;
+  if(!amount||amount<=0)return alert("Введите сумму дохода.");
+  if(!account)return alert("Выберите счёт.");
+  data.accounts[account]+=amount;
+  data.operations.push({id:Date.now(),type:"income",amount,comment,date,account});
+  saveData();updateScreen();incomeModal.classList.remove("show");
+};
+
+/* Расход */
+document.getElementById("openExpense").onclick=()=>{
+  fillAccountSelects();
+  expenseDate.value=todayString();expenseAmount.value="";expenseComment.value="";
+  if(Object.keys(data.accounts).length) expenseAccount.value=Object.keys(data.accounts)[0];
+  expenseModal.classList.add("show");
+};
+document.getElementById("closeExpense").onclick=()=>expenseModal.classList.remove("show");
+document.getElementById("saveExpense").onclick=()=>{
+  const amount=Number(expenseAmount.value),comment=expenseComment.value.trim(),date=expenseDate.value,account=expenseAccount.value;
+  if(!amount||amount<=0)return alert("Введите сумму расхода.");
+  if(!account)return alert("Выберите счёт.");
+  if(amount>data.accounts[account])return alert("На выбранном счёте недостаточно денег.");
+  data.accounts[account]-=amount;
+  data.operations.push({id:Date.now(),type:"expense",amount,comment,date,account});
+  saveData();updateScreen();expenseModal.classList.remove("show");
+};
+
+/* Редактирование операции */
+function openEditOperation(id){
+  const o=data.operations.find(x=>x.id===id);if(!o)return;
+  editingOperationId=id;fillAccountSelects();
+  editAmount.value=o.amount;editComment.value=o.comment||"";editDate.value=o.date;editAccount.value=o.account;
+  editModal.classList.add("show");
+}
+document.getElementById("closeEdit").onclick=()=>editModal.classList.remove("show");
+document.getElementById("saveEdit").onclick=()=>{
+  const o=data.operations.find(x=>x.id===editingOperationId);if(!o)return;
+  const amount=Number(editAmount.value),comment=editComment.value.trim(),date=editDate.value,account=editAccount.value;
+  if(!amount||amount<=0)return alert("Введите правильную сумму.");
+  
+  if(o.type==="income") data.accounts[o.account]-=Number(o.amount);
+  if(o.type==="expense") data.accounts[o.account]+=Number(o.amount);
+
+  if(o.type==="expense" && amount > data.accounts[account]){
+    if(o.type==="income") data.accounts[o.account]+=Number(o.amount);
+    if(o.type==="expense") data.accounts[o.account]-=Number(o.amount);
+    return alert("На выбранном счёте недостаточно денег.");
+  }
+
+  if(o.type==="income") data.accounts[account]+=amount;
+  if(o.type==="expense") data.accounts[account]-=amount;
+
+  o.amount=amount;o.comment=comment;o.date=date;o.account=account;
+  saveData();updateScreen();editModal.classList.remove("show");
+};
+document.getElementById("deleteOperation").onclick=()=>{
+  const i=data.operations.findIndex(x=>x.id===editingOperationId);if(i<0)return;
+  if(!confirm("Удалить эту операцию?"))return;
+  const o=data.operations[i];
+  if(o.type==="income")data.accounts[o.account]-=Number(o.amount);
+  if(o.type==="expense")data.accounts[o.account]+=Number(o.amount);
+  data.operations.splice(i,1);saveData();updateScreen();editModal.classList.remove("show");
+};
+
+/* Счета */
+document.getElementById("addAccount").onclick=()=>{
+  newAccountName.value="";newAccountBalance.value="";selectedIcon="💳";
+  document.querySelectorAll(".icon-choice").forEach(x=>x.classList.remove("selected"));
+  document.querySelector('.icon-choice[data-icon="💳"]').classList.add("selected");
+  accountModal.classList.add("show");
+};
+document.getElementById("closeAccount").onclick=()=>accountModal.classList.remove("show");
+document.querySelectorAll(".icon-choice").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".icon-choice").forEach(x=>x.classList.remove("selected"));
+  b.classList.add("selected");selectedIcon=b.dataset.icon;
+});
+document.getElementById("saveAccount").onclick=()=>{
+  const name=newAccountName.value.trim(),balance=Number(newAccountBalance.value)||0;
+  if(!name)return alert("Введите название счёта.");
+  const id="account_"+Date.now();
+  data.accounts[id]=balance;data.accountInfo[id]={name,icon:selectedIcon};
+  saveData();updateScreen();accountModal.classList.remove("show");
+};
+
+/* Переводы */
+function openTransferWithAccount(id){
+  fillAccountSelects();transferFrom.value=id;transferAmount.value="";transferComment.value="";transferModal.classList.add("show");
+}
+document.getElementById("openTransfer").onclick=()=>{
+  fillAccountSelects();const ids=Object.keys(data.accounts);
+  if(ids.length<2)return alert("Для перевода нужны хотя бы два счёта.");
+  transferFrom.value=ids[0];transferTo.value=ids[1];transferAmount.value="";transferComment.value="";
+  transferModal.classList.add("show");
+};
+document.getElementById("closeTransfer").onclick=()=>transferModal.classList.remove("show");
+document.getElementById("saveTransfer").onclick=()=>{
+  const from=transferFrom.value,to=transferTo.value,amount=Number(transferAmount.value),comment=transferComment.value.trim();
+  if(from===to)return alert("Выберите разные счета.");
+  if(!amount||amount<=0)return alert("Введите сумму перевода.");
+  if(amount>data.accounts[from])return alert("На счёте недостаточно денег.");
+  data.accounts[from]-=amount;data.accounts[to]+=amount;
+  data.operations.push({id:Date.now(),type:"transfer",amount,comment,date:todayString(),from,to});
+  saveData();updateScreen();transferModal.classList.remove("show");
+};
+
+/* Должники */
+document.getElementById("openDebt").onclick=()=>{
+  debtName.value="";debtAmount.value="";debtDate.value=todayString();debtComment.value="";
+  debtModal.classList.add("show");
+};
+document.getElementById("closeDebt").onclick=()=>debtModal.classList.remove("show");
+document.getElementById("saveDebt").onclick=()=>{
+  const name=debtName.value.trim(),amount=Number(debtAmount.value),date=debtDate.value,comment=debtComment.value.trim();
+  if(!name)return alert("Введите имя.");
+  if(!amount||amount<=0)return alert("Введите сумму долга.");
+  data.debts.push({id:Date.now(),name,amount,remaining:amount,date,comment,returns:[]});
+  saveData();updateScreen();debtModal.classList.remove("show");
+};
+
+function openReturnDebt(id){
+  const d=data.debts.find(x=>x.id===id);if(!d)return;
+  returningDebtId=id;
+  returnDebtAmount.value="";returnDebtDate.value=todayString();fillAccountSelects();
+  if(Object.keys(data.accounts).length) returnDebtAccount.value=Object.keys(data.accounts)[0];
+  returnDebtLabel.textContent=`Сколько вернул ${d.name}? Осталось ${formatMoney(d.remaining)}`;
+  returnDebtModal.classList.add("show");
+}
+document.getElementById("closeReturnDebt").onclick=()=>returnDebtModal.classList.remove("show");
+document.getElementById("saveDebtReturn").onclick=()=>{
+  const d=data.debts.find(x=>x.id===returningDebtId);if(!d)return;
+  const amount=Number(returnDebtAmount.value),account=returnDebtAccount.value,date=returnDebtDate.value;
+  if(!amount||amount<=0)return alert("Введите сумму возврата.");
+  if(amount>d.remaining)return alert("Возврат не может быть больше долга.");
+  data.accounts[account]+=amount;
+  d.remaining-=amount;
+  d.returns.push({amount,date,account});
+  data.operations.push({id:Date.now(),type:"income",amount,comment:`Возврат долга: ${d.name}`,date,account});
+  saveData();updateScreen();returnDebtModal.classList.remove("show");
+};
+
+function openEditDebt(id){
+  const d=data.debts.find(x=>x.id===id);if(!d)return;
+  editingDebtId=id;
+  editDebtName.value=d.name;editDebtAmount.value=d.amount;editDebtDate.value=d.date;editDebtComment.value=d.comment||"";
+  editDebtModal.classList.add("show");
+}
+document.getElementById("closeEditDebt").onclick=()=>editDebtModal.classList.remove("show");
+document.getElementById("saveDebtEdit").onclick=()=>{
+  const d=data.debts.find(x=>x.id===editingDebtId);if(!d)return;
+  const newTotal=Number(editDebtAmount.value),returned=d.amount-d.remaining;
+  if(!editDebtName.value.trim())return alert("Введите имя.");
+  if(!newTotal||newTotal<returned)return alert(`Общая сумма не может быть меньше уже возвращённых денег: ${formatMoney(returned)}.`);
+  d.name=editDebtName.value.trim();d.amount=newTotal;d.remaining=newTotal-returned;d.date=editDebtDate.value;d.comment=editDebtComment.value.trim();
+  saveData();updateScreen();editDebtModal.classList.remove("show");
+};
+document.getElementById("deleteDebt").onclick=()=>{
+  const i=data.debts.findIndex(x=>x.id===editingDebtId);if(i<0)return;
+  if(!confirm("Удалить этого должника?"))return;
+  data.debts.splice(i,1);saveData();updateScreen();editDebtModal.classList.remove("show");
+};
+
+/* Периоды */
+document.querySelectorAll(".period button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".period button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");selectedPeriod=b.dataset.period;updateScreen();
+});
+
+/* Полная история операций */
+function renderFullHistory(){
+  const box=document.getElementById("fullHistoryList");
+  const q=(document.getElementById("historySearch").value||"").trim().toLowerCase();
+  let ops=data.operations.slice().reverse();
+  
+  if(q) ops=ops.filter(o=>{
+    const info=o.type==="transfer" 
+      ? `${o.comment||""} ${data.accountInfo[o.from]?.name||""} ${data.accountInfo[o.to]?.name||""}` 
+      : `${o.comment||""} ${data.accountInfo[o.account]?.name||""}`;
+    return info.toLowerCase().includes(q);
+  });
+
+  if(!ops.length){
+    box.innerHTML='<div class="empty" style="border-radius:18px;padding:25px;text-align:center;color:#888">Ничего не найдено</div>';
+    return;
+  }
+  box.innerHTML="";
+  ops.forEach(o=>{
+    const div=document.createElement("div"); div.className="operation";
+    let icon="🟢",ic="income-icon",amt="+"+formatMoney(o.amount),cl="income",acc="";
+    if(o.type==="expense"){icon="🔴";ic="expense-icon";amt="−"+formatMoney(o.amount);cl="expense";}
+    if(o.type==="transfer"){
+      icon="🔄";ic="transfer-icon";cl="";
+      const f=data.accountInfo[o.from],t=data.accountInfo[o.to];
+      acc=`${f?.icon||""} ${f?.name||o.from} → ${t?.icon||""} ${t?.name||o.to}`;
+    } else {
+      const a=data.accountInfo[o.account];acc=a?`${a.icon} ${a.name}`:"";
+    }
+    const comment=o.comment||(o.type==="income"?"Заработок":o.type==="expense"?"Расход":"Перевод");
+    div.innerHTML=`<div class="operation-left"><div class="operation-icon ${ic}">${icon}</div><div><div class="operation-comment">${escapeHTML(comment)}</div><div class="operation-date">${formatDate(o.date)}</div><div class="operation-account">${escapeHTML(acc)}</div></div></div><div class="operation-amount ${cl}">${amt}</div>`;
+    if(o.type!=="transfer"){
+      div.onclick=()=>{
+        document.getElementById("historyModal").classList.remove("show");
+        openEditOperation(o.id);
+      };
+    }
+    box.appendChild(div);
+  });
+}
+
+document.getElementById("historySearch").oninput = renderFullHistory;
+document.getElementById("closeHistoryModal").onclick = ()=> document.getElementById("historyModal").classList.remove("show");
+
+/* Нижняя навигация */
+document.querySelectorAll(".bottom-menu .menu-item").forEach(item => {
+  item.onclick = () => {
+    document.querySelectorAll(".bottom-menu .menu-item").forEach(i => i.classList.remove("active"));
+    item.classList.add("active");
+    const tab = item.dataset.tab;
+    
+    if(tab === "history") {
+      renderFullHistory();
+      document.getElementById("historyModal").classList.add("show");
+    } else if(tab === "accounts") {
+      document.getElementById("accountsSection").scrollIntoView({behavior: "smooth"});
+    } else if(tab === "debts") {
+      document.getElementById("debtsSection").scrollIntoView({behavior: "smooth"});
+    } else if(tab === "main") {
+      window.scrollTo({top: 0, behavior: "smooth"});
+    } else if(tab === "settings") {
+      openSettings();
+    }
+  };
+});
+
+document.getElementById("settingsBtn").onclick = () => openSettings();
+
+fillAccountSelects();
+updateScreen();
+</script>
+
+<!-- НАСТРОЙКИ DENPAY -->
+<div class="modal-background" id="settingsModal"><div class="modal">
+  <div class="modal-header">
+    <div class="modal-title">⚙️ Настройки DenPay</div>
+    <button class="close" id="closeSettings">×</button>
+  </div>
+
+  <div style="background:#f5f6f8;border-radius:18px;padding:16px;margin-bottom:14px">
+    <div style="font-weight:bold;font-size:17px;margin-bottom:6px">📱 Установка приложения</div>
+    <div style="color:#777;font-size:13px;line-height:1.45">
+      Установи DenPay на телефон или компьютер — он будет открываться как отдельное приложение.
+    </div>
+    <button class="save-button" id="installAppBtn" style="margin-top:12px">📲 Установить DenPay</button>
+    <div id="installHint" style="display:none;color:#777;font-size:12px;margin-top:9px"></div>
+  </div>
+
+  <div style="background:#f5f6f8;border-radius:18px;padding:16px">
+    <div style="font-weight:bold;font-size:17px;margin-bottom:6px">💾 Резервная копия</div>
+    <div style="color:#777;font-size:13px;line-height:1.45;margin-bottom:12px">
+      Сохрани данные в файл, чтобы не потерять их при смене устройства.
+    </div>
+    <button class="account-button primary" id="exportDataBtn" style="width:100%">⬇️ Скачать резервную копию</button>
+    <button class="account-button" id="importDataBtn" style="width:100%;margin-top:8px">⬆️ Восстановить из файла</button>
+    <input type="file" id="importFileInput" accept=".json,application/json" style="display:none">
+  </div>
+</div></div>
+
+<script>
+function openSettings(){
+  document.getElementById("settingsModal").classList.add("show");
+}
+document.getElementById("closeSettings").onclick=()=>{
+  document.getElementById("settingsModal").classList.remove("show");
+};
+
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById("installAppBtn");
+const installHint = document.getElementById("installHint");
+
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  installBtn.style.display="block";
+  installHint.style.display="none";
+});
+
+window.addEventListener("appinstalled",()=>{
+  deferredInstallPrompt=null;
+  installBtn.textContent="✅ DenPay установлен";
+  installBtn.disabled=true;
+});
+
+installBtn.onclick=async()=>{
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    return;
+  }
+  installHint.style.display="block";
+  installHint.textContent="Если кнопка установки не появилась, открой DenPay через HTTPS в Chrome/Edge и выбери «Установить приложение».";
+};
+
+document.getElementById("exportDataBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="DenPay_backup_"+todayString()+".json";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById("importDataBtn").onclick=()=>{
+  document.getElementById("importFileInput").click();
+};
+
+document.getElementById("importFileInput").onchange=async(e)=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  try{
+    const imported=JSON.parse(await file.text());
+    if(!imported.accounts || !imported.accountInfo || !Array.isArray(imported.operations)){
+      throw new Error("invalid");
+    }
+    if(!confirm("Восстановить эту резервную копию? Текущие данные будут заменены.")) return;
+    data=imported;
+    if(!data.debts)data.debts=[];
+    saveData();
+    updateScreen();
+    alert("✅ Данные восстановлены.");
+    document.getElementById("settingsModal").classList.remove("show");
+  }catch(err){
+    alert("Не удалось прочитать резервную копию DenPay.");
+  }
+  e.target.value="";
+};
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
+</script>
+
+</body>
+</html>
